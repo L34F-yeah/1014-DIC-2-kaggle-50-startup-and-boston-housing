@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="zh-TW" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>50 Startups 多元線性迴歸與特徵選擇互動平台 | CRISP-DM 機器學習工作站</title>
+  <meta name="description" content="基於 CRISP-DM 流程之 50 Startups 多元線性迴歸分析平台，包含 Model A vs B 虛擬變數陷阱解析、VIF 多元共線性檢驗、6 大特徵選擇模型比較、Top 10 離群值檢測與即時獲利預測模擬器。">
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="container">
+    <!-- Top Nav Header -->
+    <header class="top-nav">
+      <div class="brand">
+        <div class="brand-icon">🚀</div>
+        <div class="brand-text">
+          <h1>50 Startups 多元線性迴歸互動分析平台</h1>
+          <p>遵循 CRISP-DM 標準流程 • 特徵選擇 • VIF 共線性 • Top 10 離群值分析</p>
+        </div>
+      </div>
+      <div class="nav-actions">
+        <button id="themeToggleBtn" class="theme-toggle-btn" aria-label="切換主題">
+          <span id="themeIcon">☀️</span> 切換淺色/深色
+        </button>
+      </div>
+    </header>
+
+    <!-- CRISP-DM 6-Stage Stepper Navigation -->
+    <nav class="stepper-nav" aria-label="CRISP-DM 流程導覽">
+      <button class="step-btn active" data-tab="tab-bu">
+        <span class="step-num">1</span>
+        <span>商業理解</span>
+      </button>
+      <button class="step-btn" data-tab="tab-du">
+        <span class="step-num">2</span>
+        <span>資料探索</span>
+      </button>
+      <button class="step-btn" data-tab="tab-dp">
+        <span class="step-num">3</span>
+        <span>資料準備 (Model A vs B & VIF)</span>
+      </button>
+      <button class="step-btn" data-tab="tab-mod">
+        <span class="step-num">4</span>
+        <span>特徵選擇與模型 (6 Models)</span>
+      </button>
+      <button class="step-btn" data-tab="tab-eval">
+        <span class="step-num">5</span>
+        <span>評估與離群值 (Top 10 Outliers)</span>
+      </button>
+      <button class="step-btn" data-tab="tab-sim">
+        <span class="step-num">6</span>
+        <span>即時預測模擬器 (Deployment)</span>
+      </button>
+    </nav>
+
+    <!-- =========================================================================
+         TAB 1: 商業理解 (Business Understanding)
+         ========================================================================= -->
+    <section id="tab-bu" class="tab-content active">
+      <div class="hero-card">
+        <h2 class="hero-title">階段 1：商業理解 (Business Understanding)</h2>
+        <p class="hero-subtitle">
+          本專案旨在透過 50 家初創企業（Startups）的財務與地理營運數據，建立多元線性迴歸模型預測其<strong>最終獲利 (Profit)</strong>。
+          探討研發支出、行政管理支出、行銷開銷以及州別對公司利潤之實質邊際效益，並深入解決<strong>多重共線性 (Multicollinearity)</strong>、<strong>虛擬變數陷阱 (Dummy Variable Trap)</strong> 與<strong>離群值 (Outliers)</strong> 影響。
+        </p>
+      </div>
+
+      <div class="grid-4">
+        <div class="card kpi-card">
+          <div class="kpi-icon kpi-blue">🔬</div>
+          <div>
+            <div class="kpi-label">主要推動特徵</div>
+            <div class="kpi-value">R&D Spend</div>
+            <div class="kpi-sub">研發支出 (相關係數 0.973)</div>
+          </div>
+        </div>
+        <div class="card kpi-card">
+          <div class="kpi-icon kpi-green">📊</div>
+          <div>
+            <div class="kpi-label">目標變數 (Target)</div>
+            <div class="kpi-value">Profit</div>
+            <div class="kpi-sub">平均獲利 $112,013</div>
+          </div>
+        </div>
+        <div class="card kpi-card">
+          <div class="kpi-icon kpi-amber">🏢</div>
+          <div>
+            <div class="kpi-label">營運地理區位</div>
+            <div class="kpi-value">3 個州別</div>
+            <div class="kpi-sub">CA, FL, NY (類別型變數)</div>
+          </div>
+        </div>
+        <div class="card kpi-card">
+          <div class="kpi-icon kpi-purple">🎯</div>
+          <div>
+            <div class="kpi-label">目標解釋力</div>
+            <div class="kpi-value">Adj R² ≈ 0.95</div>
+            <div class="kpi-sub">高精準度線性迴歸</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">📋 變數定義表 (Variables Dictionary)</h3>
+          </div>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>變數名稱 (Variable)</th>
+                  <th>資料型態 (Type)</th>
+                  <th>角色 (Role)</th>
+                  <th>商業說明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>R&D Spend</strong></td>
+                  <td><span class="badge badge-primary">Numerical</span></td>
+                  <td>Feature</td>
+                  <td>研究與開發經費支出 (美元)</td>
+                </tr>
+                <tr>
+                  <td><strong>Administration</strong></td>
+                  <td><span class="badge badge-primary">Numerical</span></td>
+                  <td>Feature</td>
+                  <td>行政與日常管理運作成本 (美元)</td>
+                </tr>
+                <tr>
+                  <td><strong>Marketing Spend</strong></td>
+                  <td><span class="badge badge-primary">Numerical</span></td>
+                  <td>Feature</td>
+                  <td>市場行銷、推廣與廣告支出 (美元)</td>
+                </tr>
+                <tr>
+                  <td><strong>State</strong></td>
+                  <td><span class="badge badge-warning">Categorical</span></td>
+                  <td>Feature</td>
+                  <td>登記營運州別 (California, Florida, New York)</td>
+                </tr>
+                <tr>
+                  <td><strong>Profit</strong></td>
+                  <td><span class="badge badge-success">Numerical</span></td>
+                  <td>Target (y)</td>
+                  <td>企業年度淨獲利 (預測目標)</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">🔍 核心分析議題與任務規範</h3>
+          </div>
+          <ul style="list-style-type: none; padding-left: 0; display: flex; flex-direction: column; gap: 0.85rem; color: var(--text-muted); font-size: 0.9rem;">
+            <li><strong style="color: var(--text-main);">1. Categorical 要用 One-Hot Encoding：</strong>類別型州別必須轉換為數值矩陣。</li>
+            <li><strong style="color: var(--text-main);">2. 選擇幾個特徵？</strong>透過正則化與包裝法挑選對獲利真正具顯著貢獻的特徵集合。</li>
+            <li><strong style="color: var(--text-main);">3. 第一步做出 Baseline Benchmark：</strong>使用 All-In（全變數 Model B）建立基準線。</li>
+            <li><strong style="color: var(--text-main);">4. 嚴格檢驗共線性 (VIF)：</strong>計算變異數膨脹因子，確保模型穩定無膨脹係數。</li>
+            <li><strong style="color: var(--text-main);">5. Model A vs Model B 陷阱：</strong>避免「虛擬變數陷阱」，以 California 為基準組。</li>
+            <li><strong style="color: var(--text-main);">6. 離群值與影響力診斷：</strong>計算庫克距離 (Cook's Distance) 標記 Top 10 離群樣本。</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================================================
+         TAB 2: 資料探索 (Data Understanding)
+         ========================================================================= -->
+    <section id="tab-du" class="tab-content">
+      <div class="hero-card">
+        <h2 class="hero-title">階段 2：資料探索與理解 (Data Understanding)</h2>
+        <p class="hero-subtitle">
+          檢視 50 家初創企業之數據分佈、地理比重、敘述性統計與相關係數矩陣。資料無缺失值，為標準高品質資料集。
+        </p>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">🗺️ 州別樣本分佈 (State Distribution)</h3>
+          </div>
+          <div style="height: 280px; position: relative;">
+            <canvas id="statePieChart"></canvas>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">📈 各特徵與利潤 (Profit) 之皮爾森相關係數</h3>
+          </div>
+          <div style="height: 280px; position: relative;">
+            <canvas id="correlationBarChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">📋 互動式初創企業資料表 (50 Startups Records)</h3>
+          <span class="badge badge-primary" id="tableRecordCount">共 50 筆</span>
+        </div>
+
+        <div class="filter-bar">
+          <input type="text" id="searchInput" class="search-input" placeholder="🔍 搜尋 ID、州別、金額...">
+          <select id="stateFilterSelect" class="sim-select" style="max-width: 200px;">
+            <option value="ALL">全部州別 (All States)</option>
+            <option value="California">California (加州)</option>
+            <option value="Florida">Florida (佛州)</option>
+            <option value="New York">New York (紐約)</option>
+          </select>
+        </div>
+
+        <div class="table-wrapper">
+          <table id="startupsDataTable">
+            <thead>
+              <tr>
+                <th data-sort="id">ID ⬍</th>
+                <th data-sort="rd">研發支出 (R&D Spend) ⬍</th>
+                <th data-sort="admin">行政支出 (Administration) ⬍</th>
+                <th data-sort="marketing">行銷支出 (Marketing Spend) ⬍</th>
+                <th data-sort="state">州別 (State) ⬍</th>
+                <th data-sort="profit">獲利 (Profit) ⬍</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody">
+              <!-- Dynamically populated via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================================================
+         TAB 3: 資料準備 (Data Preparation - Model A vs B & VIF)
+         ========================================================================= -->
+    <section id="tab-dp" class="tab-content">
+      <div class="hero-card">
+        <h2 class="hero-title">階段 3：資料準備 (Data Preparation)</h2>
+        <p class="hero-subtitle">
+          處理類別變數 One-Hot Encoding，深入剖析<strong>「虛擬變數陷阱 (Dummy Variable Trap)」</strong>以及為什麼 California 被當作基準組隱藏在截距項之中！
+        </p>
+      </div>
+
+      <div class="card" style="margin-bottom: 2rem;">
+        <div class="card-header">
+          <h3 class="card-title">⚖️ Model A vs Model B 虛擬變數陷阱互動切換器</h3>
+        </div>
+
+        <div class="toggle-switch-container">
+          <div id="btnModelB" class="toggle-option active">Model B (兩虛擬變數 + 截距項) ★ 講義推薦</div>
+          <div id="btnModelA" class="toggle-option">Model A (三虛擬變數 + 無截距項)</div>
+        </div>
+
+        <div id="modelFormulaDisplay" class="formula-box">
+          <!-- Dynamically updated -->
+        </div>
+
+        <div id="modelExplanationBox" style="font-size: 0.95rem; line-height: 1.8; color: var(--text-muted);">
+          <!-- Dynamically updated -->
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">🛡️ 多元共線性檢驗：VIF (Variance Inflation Factor)</h3>
+          </div>
+          <p style="font-size: 0.85rem; color: var(--text-dim); margin-bottom: 1rem;">
+            VIF 衡量自變數被其他自變數線性解釋的程度。一般學界標準：VIF &lt; 5 表示無多重共線性問題；VIF &gt; 10 表示嚴重共線性。
+          </p>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>特徵 (Feature)</th>
+                  <th>VIF 數值</th>
+                  <th>診斷判定</th>
+                  <th>共線性風險</th>
+                </tr>
+              </thead>
+              <tbody id="vifTableBody">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">💡 關鍵結論：加州到底在哪裡？</h3>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 1rem; font-size: 0.95rem; color: var(--text-muted);">
+            <div style="background: rgba(99, 102, 241, 0.1); border-left: 4px solid var(--primary); padding: 1rem; border-radius: var(--radius-sm);">
+              <strong style="color: #c7d2fe;">「FL 跟 NY 其實就是加州，看似只有用 FL、NY，其實也有用到加州」</strong>
+              <p style="margin-top: 0.5rem;">
+                因為 $X_{\text{CA}} + X_{\text{FL}} + X_{\text{NY}} = 1$。當公司在加州時，$X_{\text{FL}} = 0$ 且 $X_{\text{NY}} = 0$。<br>
+                此時迴歸式直接退化為：<br>
+                $\hat{y} = b + w_1 X_{\text{R\&D}} + w_2 X_{\text{Admin}} + w_3 X_{\text{Marketing}}$<br>
+                <strong>常數截距項 $b$ 實質上就是加州初創企業的基礎獲利！</strong>
+              </p>
+            </div>
+            <p>
+              若使用全部三個虛擬變數並保留截距項，將導致 $(X^T X)$ 為不可逆之奇異矩陣，這就是機器學習與計量經濟學中著名的<strong>虛擬變數陷阱 (Dummy Variable Trap)</strong>。
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================================================
+         TAB 4: 特徵選擇與模型 (Modeling & Feature Selection)
+         ========================================================================= -->
+    <section id="tab-mod" class="tab-content">
+      <div class="hero-card">
+        <h2 class="hero-title">階段 4：特徵選擇與模型建置 (Modeling & Feature Selection)</h2>
+        <p class="hero-subtitle">
+          比較 <strong>6 個多元線性迴歸模型</strong>（1 個 Baseline + 5 種特徵選擇演算法），探討不同特徵篩選策略對泛化能力與 Adjusted R² 的影響。
+        </p>
+      </div>
+
+      <div class="grid-3" id="modelsCardsGrid">
+        <!-- Dynamically rendered 6 model cards -->
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">🧩 6 大模型特徵選取結果矩陣 (Feature Selection Matrix)</h3>
+        </div>
+        <p style="font-size: 0.85rem; color: var(--text-dim); margin-bottom: 1rem;">
+          綠色代表該演算法保留並納入迴歸方程式之特徵；灰底表示被判定為冗餘或不顯著而被剔除。
+        </p>
+        <div class="table-wrapper">
+          <table id="matrixTable">
+            <thead>
+              <tr>
+                <th>模型名稱</th>
+                <th style="text-align: center;">R&D Spend</th>
+                <th style="text-align: center;">Administration</th>
+                <th style="text-align: center;">Marketing Spend</th>
+                <th style="text-align: center;">State_Florida</th>
+                <th style="text-align: center;">State_New York</th>
+                <th style="text-align: center;">保留特徵數</th>
+              </tr>
+            </thead>
+            <tbody id="matrixTableBody">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top: 2rem;">
+        <div class="card-header">
+          <h3 class="card-title">📚 Top 20 多元線性迴歸特徵選擇演算法全景圖</h3>
+        </div>
+        <div class="grid-4" style="margin-bottom: 0;">
+          <div style="background: rgba(255,255,255,0.02); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+            <h4 style="color: #60a5fa; margin-bottom: 0.5rem;">過濾法 (Filter)</h4>
+            <ol style="font-size: 0.82rem; padding-left: 1.2rem; line-height: 1.6; color: var(--text-muted);">
+              <li>皮爾森相關係數</li>
+              <li>斯皮爾曼等級相關</li>
+              <li>ANOVA F-檢定</li>
+              <li>互資訊法 (Mutual Info)</li>
+              <li>變異數門檻過濾</li>
+              <li>VIF 迭代共線性剔除</li>
+              <li>距離相關性 (Distance Corr)</li>
+            </ol>
+          </div>
+          <div style="background: rgba(255,255,255,0.02); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+            <h4 style="color: #f59e0b; margin-bottom: 0.5rem;">包裝法 (Wrapper)</h4>
+            <ol start="8" style="font-size: 0.82rem; padding-left: 1.2rem; line-height: 1.6; color: var(--text-muted);">
+              <li>SFS 前向逐步選擇 ★</li>
+              <li>SBS 後向逐步消除</li>
+              <li>雙向逐步選擇 (Stepwise)</li>
+              <li>RFE 遞迴特徵消除</li>
+              <li>RFECV 交叉驗證消除 ★</li>
+              <li>EFS 窮舉最佳子集 ★</li>
+              <li>遺傳演算法 (GA)</li>
+              <li>模擬退火法 (SA)</li>
+            </ol>
+          </div>
+          <div style="background: rgba(255,255,255,0.02); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+            <h4 style="color: #34d399; margin-bottom: 0.5rem;">嵌入法 (Embedded)</h4>
+            <ol start="16" style="font-size: 0.82rem; padding-left: 1.2rem; line-height: 1.6; color: var(--text-muted);">
+              <li>LassoCV (L1 正則化) ★</li>
+              <li>ElasticNetCV (L1+L2) ★</li>
+              <li>Ridge 嶺迴歸門檻法</li>
+              <li>隨機森林特徵重要性</li>
+              <li>XGBoost / GBDT 重要性</li>
+            </ol>
+          </div>
+          <div style="background: rgba(255,255,255,0.02); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+            <h4 style="color: #a78bfa; margin-bottom: 0.5rem;">實作對照總結</h4>
+            <p style="font-size: 0.82rem; line-height: 1.6; color: var(--text-muted);">
+              標註 ★ 者為本系統直接實作並交叉比對之 5 種演算法。實證顯示 L1 系列 (LassoCV, ElasticNetCV) 與 SFS / EFS 均精準篩除不具顯著邊際貢獻的州別虛擬變數，提升 Adjusted R²！
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================================================
+         TAB 5: 評估與離群值 (Evaluation & Outlier Detection)
+         ========================================================================= -->
+    <section id="tab-eval" class="tab-content">
+      <div class="hero-card">
+        <h2 class="hero-title">階段 5：模型評估與離群值檢測 (Evaluation & Outlier Detection)</h2>
+        <p class="hero-subtitle">
+          展示實際值 vs 預測值散布圖、迴歸擬合線、殘差分佈與庫克距離（Cook's Distance）。精準鎖定並互動式高亮標記對迴歸線產生最大影響力的 <strong>Top 10 離群值 (Outliers)</strong>。
+        </p>
+      </div>
+
+      <div class="grid-2">
+        <!-- Interactive Scatter Plot with Regression Line -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">🎯 實際利潤 vs 預測利潤 (Scatter Plot & Regression Line)</h3>
+            <span class="badge badge-danger">紅點：Top 10 Outliers</span>
+          </div>
+          <div style="height: 380px; position: relative;">
+            <canvas id="scatterRegressionChart"></canvas>
+          </div>
+          <p style="font-size: 0.8rem; color: var(--text-dim); margin-top: 0.5rem;">
+            綠色虛線為完美預測線 (y = x)；橙色實線為迴歸擬合趨勢線；點擊下方離群值表格可同步放大標記該點。
+          </p>
+        </div>
+
+        <!-- Residual Plot -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">📉 殘差圖 (Residuals vs Fitted Values)</h3>
+            <span class="badge badge-warning">同質變異性檢驗</span>
+          </div>
+          <div style="height: 380px; position: relative;">
+            <canvas id="residualsChart"></canvas>
+          </div>
+          <p style="font-size: 0.8rem; color: var(--text-dim); margin-top: 0.5rem;">
+            檢驗線性迴歸同質變異性 (Homoscedasticity) 與零均值常態假設，離群點在殘差圖中遠離 0 水平基準線。
+          </p>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <!-- Cook's Distance Stem Plot -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">📊 庫克距離影響力分析 (Cook's Distance Plot)</h3>
+            <span class="badge badge-primary">門檻值 4/n = 0.080</span>
+          </div>
+          <div style="height: 340px; position: relative;">
+            <canvas id="cooksDistanceChart"></canvas>
+          </div>
+        </div>
+
+        <!-- 6 Models Performance Comparison -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">🏆 6 大模型表現綜合比對 (Adjusted R² vs RMSE)</h3>
+          </div>
+          <div style="height: 340px; position: relative;">
+            <canvas id="modelsComparisonChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Top 10 Outliers Table with Interactive Highlighting -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">⚠️ Top 10 離群值與關鍵影響力樣本詳細清單 (點擊可於圖表高亮)</h3>
+          <span class="badge badge-danger">依 Cook's Distance 影響力排序</span>
+        </div>
+        <div class="table-wrapper">
+          <table id="outliersTable">
+            <thead>
+              <tr>
+                <th>排名</th>
+                <th>樣本 ID</th>
+                <th>所在州別</th>
+                <th>實際利潤 (Actual)</th>
+                <th>預測利潤 (Predicted)</th>
+                <th>殘差 (Residual)</th>
+                <th>學生化殘差</th>
+                <th>庫克距離 (Cook's D)</th>
+                <th>商業特徵洞察備註</th>
+              </tr>
+            </thead>
+            <tbody id="outliersTableBody">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================================================
+         TAB 6: 即時預測模擬器 (Live What-If Simulator)
+         ========================================================================= -->
+    <section id="tab-sim" class="tab-content">
+      <div class="hero-card">
+        <h2 class="hero-title">階段 6：初創企業獲利即時預測模擬器 (Deployment)</h2>
+        <p class="hero-subtitle">
+          體驗 CRISP-DM 部署應用階段！即時調整企業預算支出與登記州別，觀察不同特徵選擇模型推算之<strong>預估年度淨利潤</strong>與各特徵的邊際貢獻金額。
+        </p>
+      </div>
+
+      <div class="grid-2">
+        <!-- Simulator Input Panel -->
+        <div class="card simulator-box">
+          <div class="card-header">
+            <h3 class="card-title">🎛️ 營運預算參數設定</h3>
+            <span class="badge badge-success">即時聯動推算</span>
+          </div>
+
+          <div class="sim-input-group">
+            <label class="sim-label-row" for="simModelSelect">
+              <span>評估模型 (Selection Method)</span>
+            </label>
+            <select id="simModelSelect" class="sim-select">
+              <option value="baseline">Baseline (All In) - 包含全部 5 特徵</option>
+              <option value="lassocv" selected>LassoCV - 最佳精簡模型 (R&D + Admin + Mkt)</option>
+              <option value="rfecv">RFECV - 遞迴特徵消除模型</option>
+              <option value="sfs">Sequential Forward Selection (SFS)</option>
+              <option value="elasticnet">ElasticNetCV - 彈性網絡模型</option>
+              <option value="efs">Exhaustive Feature Selection (EFS)</option>
+            </select>
+          </div>
+
+          <div class="sim-input-group">
+            <div class="sim-label-row">
+              <label for="sliderRD">研發支出 (R&D Spend)</label>
+              <span id="labelValRD" style="color: var(--secondary); font-weight: bold;">$100,000</span>
+            </div>
+            <input type="range" id="sliderRD" class="sim-slider" min="0" max="200000" step="1000" value="100000">
+          </div>
+
+          <div class="sim-input-group">
+            <div class="sim-label-row">
+              <label for="sliderAdmin">行政支出 (Administration)</label>
+              <span id="labelValAdmin" style="color: var(--secondary); font-weight: bold;">$120,000</span>
+            </div>
+            <input type="range" id="sliderAdmin" class="sim-slider" min="30000" max="200000" step="1000" value="120000">
+          </div>
+
+          <div class="sim-input-group">
+            <div class="sim-label-row">
+              <label for="sliderMarketing">行銷支出 (Marketing Spend)</label>
+              <span id="labelValMarketing" style="color: var(--secondary); font-weight: bold;">$250,000</span>
+            </div>
+            <input type="range" id="sliderMarketing" class="sim-slider" min="0" max="500000" step="2000" value="250000">
+          </div>
+
+          <div class="sim-input-group">
+            <label class="sim-label-row" for="simStateSelect">
+              <span>企業登記州別 (State)</span>
+            </label>
+            <select id="simStateSelect" class="sim-select">
+              <option value="California">California (加州 - 基準組 Baseline)</option>
+              <option value="Florida">Florida (佛羅里達州)</option>
+              <option value="New York">New York (紐約州)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Simulator Result Panel -->
+        <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
+          <div class="card-header">
+            <h3 class="card-title">💰 模型推估預期利潤 (Predicted Profit)</h3>
+            <span class="badge badge-primary">Confidence: 95%</span>
+          </div>
+
+          <div class="prediction-result-panel">
+            <div style="font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700;">
+              預估年度淨獲利
+            </div>
+            <div id="simPredictedProfit" class="prediction-amount">$134,269</div>
+            <div id="simConfidenceInterval" style="font-size: 0.85rem; color: var(--text-dim);">
+              95% 信賴區間：$118,500 ~ $150,000
+            </div>
+          </div>
+
+          <div style="margin-top: 1.5rem;">
+            <h4 style="font-size: 0.95rem; margin-bottom: 0.75rem; color: var(--text-main);">📊 各項變數對利潤之邊際增量剖析</h4>
+            <div style="height: 180px; position: relative;">
+              <canvas id="waterfallBarChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- Application Logic -->
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
