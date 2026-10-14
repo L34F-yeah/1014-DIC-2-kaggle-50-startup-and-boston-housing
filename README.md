@@ -2,7 +2,8 @@
 
 ![50 Startups 互動式機器學習分析平台展示](dashboard_showcase.png)
 
-> **🚀 互動式 Web 儀表板**：依據 CRISP-DM 標準流程建構，整合 One-Hot Encoding（Model B 避免虛擬變數陷阱）、VIF 共線性檢驗、6 大特徵選擇模型比較、Top 10 離群值檢測與即時獲利預測模擬器。
+> **🚀 互動式 Web 儀表板**：依據 CRISP-DM 標準流程建構，整合 One-Hot Encoding（Model B 避免虛擬變數陷阱）、VIF 共線性檢驗、6 大特徵選擇模型比較、Top 10 離群值檢測與即時獲利預測模擬器。  
+> 🌐 **線上即時體驗網址 (GitHub Pages)**：[https://l34f-yeah.github.io/1014-DIC-2-kaggle-50-startup-and-boston-housing/](https://l34f-yeah.github.io/1014-DIC-2-kaggle-50-startup-and-boston-housing/)
 
 本專案依據機器學習標準資料探勘流程（CRISP-DM），針對 50 家初創企業（50 Startups）的利潤預測問題進行完整建模、共線性診斷、特徵篩選、離群值檢驗與視覺化分析。
 
