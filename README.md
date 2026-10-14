@@ -1,5 +1,9 @@
 # 50 Startups 多元線性迴歸與特徵選擇 (CRISP-DM 流程)
 
+![50 Startups 互動式機器學習分析平台展示](dashboard_showcase.png)
+
+> **🚀 互動式 Web 儀表板**：依據 CRISP-DM 標準流程建構，整合 One-Hot Encoding（Model B 避免虛擬變數陷阱）、VIF 共線性檢驗、6 大特徵選擇模型比較、Top 10 離群值檢測與即時獲利預測模擬器。
+
 本專案依據機器學習標準資料探勘流程（CRISP-DM），針對 50 家初創企業（50 Startups）的利潤預測問題進行完整建模、共線性診斷、特徵篩選、離群值檢驗與視覺化分析。
 
 ---
